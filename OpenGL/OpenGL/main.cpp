@@ -23,6 +23,7 @@ char WindowTitle[] = "世界の始まり"; // ウィンドウのタイトル
 // -------------------------
 
 void Initialize(void);
+void Idle(void);
 void Display(void);
 void Ground(void);
 
@@ -50,7 +51,9 @@ int main(int argc, char *argv[]) {
     // そこで、GLUTはコールバック処理を登録することで、イベントを処理します。
     // それがglutDisplayFunc(void(*func)(void))です
     
-    glutDisplayFunc(Display); // 再描画時に呼び出される関数を指定する (関数名: Display)
+    glutDisplayFunc(Display); // 描画時に呼び出される関数を指定する (関数名: Display)
+    
+    glutIdleFunc(Idle); // プログラムがアイドル時に呼び出さされる関数を指定する (Idleと判断した時に再Idle関数が実行され、そこで再描画コマンドを発行することで、Animationを実現する)
     
     Initialize(); // 初期設定
     
@@ -68,11 +71,16 @@ void Initialize(void) {
     glEnable(GL_DEPTH_TEST); // Z Testを有効にする
     
     // 座標変換 (ワールド変換 -> ビュー座標変換(カメラ) -> 射影変換 -> クリッピング)
+    // NOTE : なぜか 通常の順序とは逆に、Viewport変換 -> 射影変換 -> モデルビュー変換の順に設定する.
     
     // 射影変換の際に必要な情報
+    glMatrixMode(GL_PROJECTION); //行列モードの設定（GL_PROJECTION : 透視変換行列の設定、GL_MODELVIEW：モデルビュー変換行列）
+    glLoadIdentity(); // 行列の初期化
     gluPerspective(30.0, (double)WindowWidth/(double)WindowHeight, 0.1, 1000.0); // 透視投影の視体積
     
     // ビュー座標変換の際に必要な情報
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
     gluLookAt(
         0.0, -100.0, 50.0, // 視点の位置 x, y, z
         0.0, 100.0, 0.0, // 視界の中心位置座標 x, y, z
@@ -85,11 +93,19 @@ void Initialize(void) {
 // -------------------------
 
 void Display(void) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // カラーバッファとZバッファの消去 (ステンシルバッファ使うときは、別途(GL_STENCIL_BUFFER_BIT)指定する必要あり)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // カラーバッファとZバッファの消去 (ステンシルバッファ使うときは、別途(GL_STENCIL_BUFFER_BIT)指定する必要あり)
     
     Ground();
     
     glutSwapBuffers(); // glutInitDisplayModel(GLUT_DOUBLE)でダブルバッファリングを可にしているので必要
+}
+
+// -------------------------
+// アイドル時に呼び出される関数
+// -------------------------
+
+void Idle(void) {
+    glutPostRedisplay(); // glutDisplayFunc()で指定した関数を1回実行する.
 }
 
 //----------------------------------------------------
