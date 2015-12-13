@@ -43,6 +43,25 @@ int face[][4] = {
 };
 
 // -------------------------
+// マテリアルの定義
+// -------------------------
+
+struct MaterialStruct {
+    GLfloat ambient[4];
+    GLfloat diffuse[4];
+    GLfloat specular[4];
+    GLfloat shininess;
+};
+
+// jade
+MaterialStruct ms_jade = {
+    { 0.135, 0.2225, 0.1575, 1.0 }, // ambient
+    { 0.54, 0.89, 0.63, 1.0 }, // diffuse
+    { 0.316228, 0.316228, 0.316228, 1.0 }, // speculat
+    12.8
+};
+
+// -------------------------
 // 関数プロトタイプ(宣言)
 // -------------------------
 
@@ -96,6 +115,10 @@ void Initialize(void) {
     
     glEnable(GL_DEPTH_TEST); // Z Testを有効にする
     
+    // 光源の設定
+    GLfloat light_position0[] = { -50.0, -50.0, 20.0, 1.0 }; // 光源0の座標
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position0);
+    
     // 座標変換 (ワールド変換 -> ビュー座標変換(カメラ) -> 射影変換 -> クリッピング)
     // NOTE : なぜか 通常の順序とは逆に、Viewport変換 -> 射影変換 -> モデルビュー変換の順に設定する.
     // OpenGL的には、カレント変換行列の生成を行っている.
@@ -123,6 +146,12 @@ void Display(void) {
     
     // バッファのクリア
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // カラーバッファとZバッファの消去 (ステンシルバッファ使うときは、別途(GL_STENCIL_BUFFER_BIT)指定する必要あり)
+    
+    // 陰影ON---------------------
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0); // 光源0を利用
+    // --------------------------
+    
     
     /*
      * 複数のオブジェクトを描画する際は、Initializeで作成したカレント行列を元に描画する必要があるので、オブジェクトの描画ごとにカレント行列をPushして、描画おわり次第Popする.
